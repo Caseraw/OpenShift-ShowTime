@@ -1,0 +1,28 @@
+{
+  "name": "OpenShift ShowTime",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspaces/OpenShift-ShowTime",
+  "remoteUser": "vscode",
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "redhat.vscode-yaml",
+        "redhat.ansible",
+        "ms-kubernetes-tools.vscode-kubernetes-tools"
+      ],
+      "settings": {
+        "ansible.validation.enabled": true,
+        "yaml.schemas": {}
+      }
+    }
+  },
+  "postCreateCommand": "oc version --client 2>/dev/null || true; helm version --short; kustomize version; ansible --version | head -1",
+  "mounts": [
+    "source=${localEnv:HOME}/.kube,target=/home/vscode/.kube,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.config/containers,target=/home/vscode/.config/containers,type=bind,consistency=cached"
+  ]
+}
