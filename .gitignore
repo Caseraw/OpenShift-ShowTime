@@ -1,0 +1,25 @@
+# BYO — private, local-only content (structure is tracked; contents are not)
+byo/Credentials/**
+!byo/Credentials/.gitkeep
+byo/Ansible-Vault/**
+!byo/Ansible-Vault/.gitkeep
+byo/Sealed-Secrets/**
+!byo/Sealed-Secrets/.gitkeep
+byo/Other/**
+!byo/Other/.gitkeep
+
+# Documentation build output
+site/
+.cache/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
