@@ -1,0 +1,10 @@
+name: rhacm-install
+description: Install Red Hat Advanced Cluster Management on an OpenShift hub cluster via Kustomize.
+version: "0.1.0"
+requires: []
+provides:
+  - multicluster-management
+  - rhacm-operator
+paths:
+  kustomize: kustomize/
+  automations: automations/

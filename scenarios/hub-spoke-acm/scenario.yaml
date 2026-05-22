@@ -1,0 +1,10 @@
+id: hub-spoke-acm
+title: Basic hub and spoke with Red Hat Advanced Cluster Management
+summary: Central OpenShift hub running RHACM managing one or more OpenShift spoke clusters.
+components:
+  - name: rhacm-install
+    role: hub
+    optional: false
+demo:
+  path: demo/
+  entrypoint: demo/README.md
