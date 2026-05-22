@@ -32,6 +32,11 @@ nav:
       - Components: concepts/components.md
       - Scenarios: concepts/scenarios.md
       - BYO: concepts/byo.md
+  - Catalog:
+      - Scenarios:
+          - Hub and spoke (RHACM): scenarios/hub-spoke-acm.md
+      - Components:
+          - RHACM install: components/rhacm-install.md
   - Project layout: project-layout.md
 
 markdown_extensions:

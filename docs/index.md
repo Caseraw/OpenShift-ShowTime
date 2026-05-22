@@ -25,6 +25,12 @@ flowchart LR
 
 Each scenario declares which components it uses. Components may ship Ansible playbooks, shell automation, Kustomize overlays, or Helm charts.
 
+## Scenarios in the catalog
+
+| Scenario | Description |
+|----------|-------------|
+| [Hub and spoke (RHACM)](scenarios/hub-spoke-acm.md) | Hub cluster with RHACM managing one or more OpenShift spokes |
+
 ## Next steps
 
 - [Concepts overview](concepts/overview.md)
