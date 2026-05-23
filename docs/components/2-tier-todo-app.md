@@ -12,6 +12,8 @@ Showcase **2-tier To Do application** for scenario narratives:
 
 Images are built with podman and published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app`.
 
+The frontend targets PostgreSQL via configurable environment variables (`DB_HOST`, `DATABASE_URL`, and related settings), including OpenShift Service DNS for backends on the same or a peer cluster.
+
 ## Layout
 
 - `src/frontend/` — application source and Containerfile
