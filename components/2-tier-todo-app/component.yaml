@@ -1,6 +1,6 @@
 name: 2-tier-todo-app
 description: Simple 2-tier To Do showcase app — frontend on ROSA, PostgreSQL on OpenShift on-prem.
-version: "0.1.0"
+version: "0.1.1"
 requires: []
 provides:
   - sample-application
