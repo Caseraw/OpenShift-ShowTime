@@ -84,6 +84,8 @@ kustomize build components/2-tier-todo-app/kustomize/postgresql | oc apply -f -
 
 Note the PostgreSQL hostname or IP that ROSA can reach (Service DNS alone is not enough across clusters unless you expose it on your hybrid network).
 
+On a **fresh database** (empty PVC), the PostgreSQL image automatically loads five sample to do items for demo walkthroughs. Re-deploying against existing data does not re-seed tasks.
+
 ### 2. Frontend — ROSA
 
 Point the frontend at the PostgreSQL backend using environment variables (see [Database connection](#database-connection) below). At minimum, set `DB_HOST` in `kustomize/frontend/configmap.yaml` to a hostname ROSA can resolve—often the on-prem OpenShift **Service DNS** name. Match `DB_PASSWORD` in `kustomize/frontend/secret.yaml` with the database secret.
