@@ -47,13 +47,32 @@ From the repository root:
 
 ```bash
 chmod +x components/2-tier-todo-app/automations/build.sh
+chmod +x components/2-tier-todo-app/automations/build-push.sh
 
-# Build only
+# Build only (uses version from component.yaml)
 components/2-tier-todo-app/automations/build.sh
 
-# Build and push
-PUSH=true components/2-tier-todo-app/automations/build.sh
+# Build locally with an explicit version
+VERSION=0.1.2 components/2-tier-todo-app/automations/build.sh
 ```
+
+### Build and push (recommended)
+
+`build-push.sh` checks Quay for existing `{frontend,postgresql}-X.Y.Z` tags, picks the next patch version, updates `component.yaml` and Kustomize image tags, then builds and pushes:
+
+```bash
+podman login quay.io
+components/2-tier-todo-app/automations/build-push.sh
+```
+
+Version logic:
+
+1. List tags on `quay.io/rh-ee-kamirsar/2-tier-to-do-app` (via `skopeo` or the Quay API).
+2. Find the highest semver among `frontend-*` / `postgresql-*` tags and `component.yaml`.
+3. If that version already exists in the registry, bump the patch (`0.1.0` → `0.1.1`).
+4. Otherwise publish the highest version (first push of a manually bumped `component.yaml`).
+
+Set `UPDATE_MANIFESTS=false` to push without rewriting local YAML, or `VERSION=x.y.z` to force a specific version.
 
 Images published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app` use `{image}-{version}` tags (version from `component.yaml`, currently `0.1.0`):
 
@@ -64,13 +83,16 @@ Images published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app` use `{image}-{vers
 | `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend-latest` | Latest frontend build |
 | `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql-latest` | Latest PostgreSQL build |
 
-Optional environment variables: `REGISTRY`, `VERSION` (defaults to `component.yaml`), `PUSH` (default `false`).
+Optional environment variables: `REGISTRY`, `VERSION` (defaults to `component.yaml` for `build.sh`), `PUSH` (default `false` for `build.sh`).
 
 Log in to Quay before pushing:
 
 ```bash
 podman login quay.io
+PUSH=true VERSION=0.1.0 components/2-tier-todo-app/automations/build.sh
 ```
+
+Prefer `automations/build-push.sh` for registry-aware version bumps and manifest updates.
 
 ## Deploy
 

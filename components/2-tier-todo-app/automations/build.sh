@@ -5,7 +5,11 @@ REGISTRY="${REGISTRY:-quay.io/rh-ee-kamirsar/2-tier-to-do-app}"
 PUSH="${PUSH:-false}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="${VERSION:-$(awk '/^version:/ { gsub(/"/, "", $2); print $2 }' "${ROOT}/component.yaml")}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ -z "${VERSION:-}" ]]; then
+  VERSION="$(awk '/^version:/ { gsub(/"/, "", $2); print $2 }' "${ROOT}/component.yaml")"
+fi
 VERSION="${VERSION:-0.1.0}"
 
 build_image() {
