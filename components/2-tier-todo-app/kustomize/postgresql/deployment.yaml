@@ -18,8 +18,8 @@ spec:
     spec:
       containers:
         - name: todo-postgresql
-          image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-0.1.0
-          imagePullPolicy: IfNotPresent
+          image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-0.1.1
+          imagePullPolicy: Always
           ports:
             - containerPort: 5432
               name: todo-postgresql

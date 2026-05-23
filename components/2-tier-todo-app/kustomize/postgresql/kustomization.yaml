@@ -6,12 +6,14 @@ namespace: todo-postgresql
 resources:
   - secret.yaml
   - pvc.yaml
+  - imagestream.yaml
+  - buildconfig.yaml
   - deployment.yaml
   - service.yaml
 
 images:
   - name: quay.io/rh-ee-kamirsar/2-tier-to-do-app
-    newName: image-registry.openshift-image-registry.svc:5000/todo-build/todo-postgresql
+    newName: image-registry.openshift-image-registry.svc:5000/todo-postgresql/todo-postgresql
     newTag: latest
 
 labels:
