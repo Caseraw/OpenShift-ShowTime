@@ -16,8 +16,6 @@ spec:
       labels:
         app.kubernetes.io/name: todo-postgresql
     spec:
-      securityContext:
-        fsGroup: 999
       containers:
         - name: todo-postgresql
           image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-0.1.0

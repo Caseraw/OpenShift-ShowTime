@@ -11,7 +11,8 @@ resources:
 
 images:
   - name: quay.io/rh-ee-kamirsar/2-tier-to-do-app
-    newTag: postgresql-0.1.0
+    newName: image-registry.openshift-image-registry.svc:5000/todo-build/todo-postgresql
+    newTag: latest
 
 labels:
   - pairs:

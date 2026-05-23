@@ -12,7 +12,8 @@ resources:
 
 images:
   - name: quay.io/rh-ee-kamirsar/2-tier-to-do-app
-    newTag: frontend-0.1.0
+    newName: image-registry.openshift-image-registry.svc:5000/todo-build/todo-frontend
+    newTag: latest
 
 labels:
   - pairs:
