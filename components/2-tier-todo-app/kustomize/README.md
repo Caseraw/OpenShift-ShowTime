@@ -17,7 +17,13 @@ Replace the placeholder password in `secret.yaml` (or patch from `byo/`) before 
 
 ## ROSA — Frontend
 
-Update `frontend/configmap.yaml` so `DB_HOST` resolves to the on-prem PostgreSQL endpoint reachable from ROSA (VPN, private link, or your platform’s hybrid connectivity). Align `frontend/secret.yaml` `DB_PASSWORD` with the database secret.
+Configure how the frontend reaches PostgreSQL (possibly on another OpenShift cluster):
+
+1. Set `DB_HOST` in `frontend/configmap.yaml` to a resolvable hostname—commonly the backend **Service DNS** name, for example `todo-postgresql.todo-app.svc.cluster.local`.
+2. Align `DB_PASSWORD` in `frontend/secret.yaml` with the database secret.
+3. Optionally set `DATABASE_URL` in a Secret instead of the individual `DB_*` variables.
+
+The frontend readiness probe calls `/ready` and only passes when the database is reachable.
 
 ```bash
 oc apply -k components/2-tier-todo-app/kustomize/frontend/

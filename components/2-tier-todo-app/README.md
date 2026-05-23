@@ -86,7 +86,7 @@ Note the PostgreSQL hostname or IP that ROSA can reach (Service DNS alone is not
 
 ### 2. Frontend — ROSA
 
-Set `DB_HOST` in `kustomize/frontend/configmap.yaml` to the on-prem PostgreSQL endpoint. Match `DB_PASSWORD` in `kustomize/frontend/secret.yaml` with the database secret.
+Point the frontend at the PostgreSQL backend using environment variables (see [Database connection](#database-connection) below). At minimum, set `DB_HOST` in `kustomize/frontend/configmap.yaml` to a hostname ROSA can resolve—often the on-prem OpenShift **Service DNS** name. Match `DB_PASSWORD` in `kustomize/frontend/secret.yaml` with the database secret.
 
 ```bash
 oc login <rosa-api>
@@ -96,6 +96,75 @@ oc get route todo-frontend -o jsonpath='{.spec.host}{"\n"}'
 ```
 
 Open the Route URL in a browser. Add, check off, and delete to do items to verify end-to-end connectivity.
+
+## Database connection
+
+The frontend connects to PostgreSQL using **configurable environment variables**. The database may run on the same OpenShift cluster or on a **different cluster** (for example on-prem while the frontend runs on ROSA). Use any hostname that resolves from the frontend pod—OpenShift internal Service notation is supported.
+
+### Option A — individual variables (default)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DB_HOST` | Yes* | PostgreSQL host; use Service DNS when applicable |
+| `DB_PORT` | No | Port (default `5432`) |
+| `DB_NAME` | Yes* | Database name |
+| `DB_USER` | Yes* | Database user |
+| `DB_PASSWORD` | Yes* | Database password (usually from a Secret) |
+| `DB_SSLMODE` | No | `sslmode` for psycopg2 (`require`, `prefer`, `disable`, …) |
+| `DB_CONNECT_TIMEOUT` | No | Connection timeout in seconds |
+
+\*Not required when `DATABASE_URL` is set.
+
+**OpenShift Service DNS examples** (replace `todo-app` with your backend namespace):
+
+| Scope | Example `DB_HOST` |
+|-------|-------------------|
+| Same cluster, short name | `todo-postgresql.todo-app.svc` |
+| Same cluster, fully qualified | `todo-postgresql.todo-app.svc.cluster.local` |
+| Multi-cluster / Submariner (when configured) | `todo-postgresql.todo-app.svc.clusterset.local` |
+| External / hybrid DNS | Hostname your platform exposes to ROSA |
+
+### Option B — single connection URL
+
+Set `DATABASE_URL` instead of the individual variables (takes precedence):
+
+```text
+postgresql://todo:password@todo-postgresql.todo-app.svc.cluster.local:5432/todos
+```
+
+Store it in a Secret when it contains credentials:
+
+```bash
+oc create secret generic todo-frontend \
+  --from-literal=DATABASE_URL='postgresql://todo:YOUR_PASSWORD@todo-postgresql.todo-app.svc.cluster.local:5432/todos' \
+  --dry-run=client -o yaml | oc apply -f -
+```
+
+URL-encode special characters in the password.
+
+### Local testing
+
+```bash
+podman run -d --name todo-pg --network todo-local \
+  -e POSTGRES_DB=todos -e POSTGRES_USER=todo -e POSTGRES_PASSWORD=test \
+  -e PGDATA=/var/lib/postgresql/data/pgdata \
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql
+
+podman run -d --name todo-fe --network todo-local -p 8080:8080 \
+  -e DB_HOST=todo-pg -e DB_PORT=5432 -e DB_NAME=todos \
+  -e DB_USER=todo -e DB_PASSWORD=test \
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend
+```
+
+Or with `DATABASE_URL`:
+
+```bash
+podman run -d --name todo-fe --network todo-local -p 8080:8080 \
+  -e DATABASE_URL='postgresql://todo:test@todo-pg:5432/todos' \
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend
+```
+
+Check connectivity: `curl http://127.0.0.1:8080/ready`
 
 ## API
 
@@ -118,6 +187,6 @@ The frontend exposes a small REST API used by the UI:
 | Material | Location |
 |----------|----------|
 | Quay push/pull credentials | `byo/Credentials/` |
-| Database passwords, `DB_HOST` overrides | `byo/Other/` (Kustomize patches, local only) |
+| Database passwords, `DB_HOST`, `DATABASE_URL` | `byo/Other/` (Kustomize patches, local only) |
 
 Do not commit real passwords. The tracked secrets use `change-me` placeholders.

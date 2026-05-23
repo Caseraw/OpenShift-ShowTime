@@ -6,14 +6,49 @@ from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 
 
+def get_db_connection_params():
+    """Resolve PostgreSQL connection settings from the environment.
+
+    Prefer DATABASE_URL when set. Otherwise use DB_HOST and related variables
+    so the target can be any resolvable hostname, including OpenShift Service
+    DNS on the same cluster or a cross-cluster service name on a shared network.
+    """
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if database_url:
+        return {"dsn": database_url}
+
+    required = ("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD")
+    missing = [name for name in required if not os.environ.get(name, "").strip()]
+    if missing:
+        raise RuntimeError(
+            "Database not configured: set DATABASE_URL or "
+            + ", ".join(missing)
+        )
+
+    params = {
+        "host": os.environ["DB_HOST"].strip(),
+        "port": os.environ.get("DB_PORT", "5432").strip(),
+        "dbname": os.environ["DB_NAME"].strip(),
+        "user": os.environ["DB_USER"].strip(),
+        "password": os.environ["DB_PASSWORD"],
+    }
+
+    sslmode = os.environ.get("DB_SSLMODE", "").strip()
+    if sslmode:
+        params["sslmode"] = sslmode
+
+    connect_timeout = os.environ.get("DB_CONNECT_TIMEOUT", "").strip()
+    if connect_timeout:
+        params["connect_timeout"] = int(connect_timeout)
+
+    return params
+
+
 def get_db_connection():
-    return psycopg2.connect(
-        host=os.environ["DB_HOST"],
-        port=os.environ.get("DB_PORT", "5432"),
-        dbname=os.environ["DB_NAME"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-    )
+    params = get_db_connection_params()
+    if "dsn" in params:
+        return psycopg2.connect(params["dsn"])
+    return psycopg2.connect(**params)
 
 
 @app.route("/")
@@ -24,6 +59,17 @@ def index():
 @app.route("/health")
 def health():
     return jsonify(status="ok")
+
+
+@app.route("/ready")
+def ready():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+        return jsonify(status="ok", database="connected")
+    except Exception as exc:
+        return jsonify(status="error", database=str(exc)), 503
 
 
 @app.route("/api/todos", methods=["GET"])

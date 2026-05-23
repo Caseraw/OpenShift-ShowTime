@@ -3,7 +3,13 @@ kind: ConfigMap
 metadata:
   name: todo-frontend
 data:
-  DB_HOST: todo-postgresql.example-onprem.svc
+  # OpenShift Service DNS for the on-prem PostgreSQL backend.
+  # Same cluster:  todo-postgresql.<namespace>.svc.cluster.local
+  # Cross-cluster: use the hostname your hybrid network or multi-cluster
+  #               service setup exposes (for example *.svc.clusterset.local).
+  DB_HOST: todo-postgresql.todo-app.svc.cluster.local
   DB_PORT: "5432"
   DB_NAME: todos
   DB_USER: todo
+  # Optional when connecting over TLS: require, prefer, disable, etc.
+  # DB_SSLMODE: require
