@@ -3,28 +3,28 @@ kind: Deployment
 metadata:
   name: todo-postgresql
   labels:
-    app: todo-postgresql
+    app.kubernetes.io/name: todo-postgresql
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: todo-postgresql
+      app.kubernetes.io/name: todo-postgresql
   template:
     metadata:
       labels:
-        app: todo-postgresql
+        app.kubernetes.io/name: todo-postgresql
     spec:
       securityContext:
         fsGroup: 999
       containers:
-        - name: postgresql
+        - name: todo-postgresql
           image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-0.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
-              name: postgresql
+              name: todo-postgresql
           envFrom:
             - secretRef:
                 name: todo-postgresql

@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: todo-frontend
   labels:
-    app: todo-frontend
+    app.kubernetes.io/name: todo-frontend
 spec:
   selector:
-    app: todo-frontend
+    app.kubernetes.io/name: todo-frontend
   ports:
-    - name: http
+    - name: todo-frontend
       port: 8080
-      targetPort: http
+      targetPort: todo-frontend

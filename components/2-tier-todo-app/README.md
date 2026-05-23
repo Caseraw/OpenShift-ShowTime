@@ -101,42 +101,40 @@ Prefer `automations/build-push.sh` for registry-aware version bumps and manifest
 
 Register two Applications on your Argo CD / OpenShift GitOps instance:
 
-| Application | Cluster | Kustomize path |
-|-------------|---------|----------------|
-| `todo-postgresql` | on-prem (`destination.name: on-prem`) | `kustomize/postgresql/` |
-| `todo-frontend` | ROSA (`destination.name: rosa`) | `kustomize/frontend/` |
+| Application | Namespace | Kustomize path |
+|-------------|-----------|----------------|
+| `todo-postgresql` | `todo-postgresql` | `kustomize/postgresql/` |
+| `todo-frontend` | `todo-frontend` | `kustomize/frontend/` |
 
 ```bash
 oc apply -k components/2-tier-todo-app/argocd/
 ```
 
-See [`argocd/README.md`](argocd/README.md) for cluster registration, sync order, and customization. Sync **postgresql** before **frontend**.
+See [`argocd/README.md`](argocd/README.md) for cluster registration, sync order, and customization. Sync **todo-postgresql** before **todo-frontend**.
 
 ### Option B — Manual `oc apply`
 
-#### 1. Backend — on-prem OpenShift
+#### 1. Backend — todo-postgresql (on-prem OpenShift)
 
 Replace the placeholder database password in `kustomize/postgresql/secret.yaml` (or apply a patch from `byo/`).
 
 ```bash
 oc login <on-prem-api>
-oc new-project todo-app   # or your project
-kustomize build components/2-tier-todo-app/kustomize/postgresql | oc apply -f -
+oc apply -k components/2-tier-todo-app/kustomize/postgresql/
 ```
 
 Note the PostgreSQL hostname or IP that ROSA can reach (Service DNS alone is not enough across clusters unless you expose it on your hybrid network).
 
 On a **fresh database** (empty PVC), the PostgreSQL image automatically loads five sample to do items for demo walkthroughs. Re-deploying against existing data does not re-seed tasks.
 
-### 2. Frontend — ROSA
+#### 2. Frontend — todo-frontend (ROSA)
 
-Point the frontend at the PostgreSQL backend using environment variables (see [Database connection](#database-connection) below). At minimum, set `DB_HOST` in `kustomize/frontend/configmap.yaml` to a hostname ROSA can resolve—often the on-prem OpenShift **Service DNS** name. Match `DB_PASSWORD` in `kustomize/frontend/secret.yaml` with the database secret.
+Point the frontend at the PostgreSQL backend using environment variables (see [Database connection](#database-connection) below). Default `DB_HOST` is `todo-postgresql.todo-postgresql.svc.cluster.local`. Match `DB_PASSWORD` in `kustomize/frontend/secret.yaml` with the database secret.
 
 ```bash
 oc login <rosa-api>
-oc new-project todo-app
-kustomize build components/2-tier-todo-app/kustomize/frontend | oc apply -f -
-oc get route todo-frontend -o jsonpath='{.spec.host}{"\n"}'
+oc apply -k components/2-tier-todo-app/kustomize/frontend/
+oc -n todo-frontend get route todo-frontend -o jsonpath='{.spec.host}{"\n"}'
 ```
 
 Open the Route URL in a browser. Add, check off, and delete to do items to verify end-to-end connectivity.
@@ -159,13 +157,13 @@ The frontend connects to PostgreSQL using **configurable environment variables**
 
 \*Not required when `DATABASE_URL` is set.
 
-**OpenShift Service DNS examples** (replace `todo-app` with your backend namespace):
+**OpenShift Service DNS examples** for the `todo-postgresql` Service:
 
 | Scope | Example `DB_HOST` |
 |-------|-------------------|
-| Same cluster, short name | `todo-postgresql.todo-app.svc` |
-| Same cluster, fully qualified | `todo-postgresql.todo-app.svc.cluster.local` |
-| Multi-cluster / Submariner (when configured) | `todo-postgresql.todo-app.svc.clusterset.local` |
+| Same cluster, short name | `todo-postgresql.todo-postgresql.svc` |
+| Same cluster, fully qualified | `todo-postgresql.todo-postgresql.svc.cluster.local` |
+| Multi-cluster / Submariner (when configured) | `todo-postgresql.todo-postgresql.svc.clusterset.local` |
 | External / hybrid DNS | Hostname your platform exposes to ROSA |
 
 ### Option B — single connection URL
@@ -173,14 +171,14 @@ The frontend connects to PostgreSQL using **configurable environment variables**
 Set `DATABASE_URL` instead of the individual variables (takes precedence):
 
 ```text
-postgresql://todo:password@todo-postgresql.todo-app.svc.cluster.local:5432/todos
+postgresql://todo:password@todo-postgresql.todo-postgresql.svc.cluster.local:5432/todos
 ```
 
 Store it in a Secret when it contains credentials:
 
 ```bash
-oc create secret generic todo-frontend \
-  --from-literal=DATABASE_URL='postgresql://todo:YOUR_PASSWORD@todo-postgresql.todo-app.svc.cluster.local:5432/todos' \
+oc -n todo-frontend create secret generic todo-frontend \
+  --from-literal=DATABASE_URL='postgresql://todo:YOUR_PASSWORD@todo-postgresql.todo-postgresql.svc.cluster.local:5432/todos' \
   --dry-run=client -o yaml | oc apply -f -
 ```
 
@@ -189,13 +187,13 @@ URL-encode special characters in the password.
 ### Local testing
 
 ```bash
-podman run -d --name todo-pg --network todo-local \
+podman run -d --name todo-postgresql --network todo-local \
   -e POSTGRES_DB=todos -e POSTGRES_USER=todo -e POSTGRES_PASSWORD=test \
   -e PGDATA=/var/lib/postgresql/data/pgdata \
   quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-latest
 
-podman run -d --name todo-fe --network todo-local -p 8080:8080 \
-  -e DB_HOST=todo-pg -e DB_PORT=5432 -e DB_NAME=todos \
+podman run -d --name todo-frontend --network todo-local -p 8080:8080 \
+  -e DB_HOST=todo-postgresql -e DB_PORT=5432 -e DB_NAME=todos \
   -e DB_USER=todo -e DB_PASSWORD=test \
   quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-latest
 ```
@@ -203,8 +201,8 @@ podman run -d --name todo-fe --network todo-local -p 8080:8080 \
 Or with `DATABASE_URL`:
 
 ```bash
-podman run -d --name todo-fe --network todo-local -p 8080:8080 \
-  -e DATABASE_URL='postgresql://todo:test@todo-pg:5432/todos' \
+podman run -d --name todo-frontend --network todo-local -p 8080:8080 \
+  -e DATABASE_URL='postgresql://todo:test@todo-postgresql:5432/todos' \
   quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-latest
 ```
 

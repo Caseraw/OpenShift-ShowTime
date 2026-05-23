@@ -3,14 +3,14 @@ kind: Route
 metadata:
   name: todo-frontend
   labels:
-    app: todo-frontend
+    app.kubernetes.io/name: todo-frontend
 spec:
   to:
     kind: Service
     name: todo-frontend
     weight: 100
   port:
-    targetPort: http
+    targetPort: todo-frontend
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect

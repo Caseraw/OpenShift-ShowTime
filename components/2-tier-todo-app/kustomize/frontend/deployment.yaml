@@ -3,24 +3,24 @@ kind: Deployment
 metadata:
   name: todo-frontend
   labels:
-    app: todo-frontend
+    app.kubernetes.io/name: todo-frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: todo-frontend
+      app.kubernetes.io/name: todo-frontend
   template:
     metadata:
       labels:
-        app: todo-frontend
+        app.kubernetes.io/name: todo-frontend
     spec:
       containers:
-        - name: frontend
+        - name: todo-frontend
           image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-0.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
-              name: http
+              name: todo-frontend
           envFrom:
             - configMapRef:
                 name: todo-frontend
@@ -41,17 +41,17 @@ spec:
           startupProbe:
             httpGet:
               path: /health
-              port: http
+              port: todo-frontend
             failureThreshold: 12
             periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /ready
-              port: http
+              port: todo-frontend
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: http
+              port: todo-frontend
             initialDelaySeconds: 15
             periodSeconds: 20
