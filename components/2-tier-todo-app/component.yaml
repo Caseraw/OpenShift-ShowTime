@@ -5,6 +5,8 @@ requires: []
 provides:
   - sample-application
   - 2-tier-web-app
+  - gitops-argocd
 paths:
   kustomize: kustomize/
   automations: automations/
+  argocd: argocd/

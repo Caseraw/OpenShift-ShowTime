@@ -20,6 +20,7 @@ The frontend targets PostgreSQL via configurable environment variables (`DB_HOST
 - `src/postgresql/` — PostgreSQL image with schema init
 - `kustomize/frontend/` — manifests for ROSA
 - `kustomize/postgresql/` — manifests for on-prem
+- `argocd/` — Argo CD Applications for GitOps deploy
 - `automations/build.sh` — build images for a given version
 - `automations/build-push.sh` — resolve next version from Quay, build, and push images (no cluster deploy)
 

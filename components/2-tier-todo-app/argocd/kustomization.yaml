@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace where Argo CD runs (OpenShift GitOps default).
+namespace: openshift-gitops
+
+resources:
+  - postgresql-application.yaml
+  - frontend-application.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: 2-tier-todo-app
+      app.kubernetes.io/component: argocd

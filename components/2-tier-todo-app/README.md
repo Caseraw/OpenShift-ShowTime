@@ -24,6 +24,7 @@ Cluster provisioning, hybrid networking, and scenario storytelling live in scena
 ```
 2-tier-todo-app/
 ├── automations/build.sh          # podman build (and optional push)
+├── argocd/                       # Argo CD Application manifests
 ├── component.yaml
 ├── kustomize/
 │   ├── frontend/                 # Deploy to ROSA
@@ -96,7 +97,24 @@ Prefer `automations/build-push.sh` for registry-aware version bumps and manifest
 
 ## Deploy
 
-### 1. Backend — on-prem OpenShift
+### Option A — Argo CD (recommended)
+
+Register two Applications on your Argo CD / OpenShift GitOps instance:
+
+| Application | Cluster | Kustomize path |
+|-------------|---------|----------------|
+| `todo-postgresql` | on-prem (`destination.name: on-prem`) | `kustomize/postgresql/` |
+| `todo-frontend` | ROSA (`destination.name: rosa`) | `kustomize/frontend/` |
+
+```bash
+oc apply -k components/2-tier-todo-app/argocd/
+```
+
+See [`argocd/README.md`](argocd/README.md) for cluster registration, sync order, and customization. Sync **postgresql** before **frontend**.
+
+### Option B — Manual `oc apply`
+
+#### 1. Backend — on-prem OpenShift
 
 Replace the placeholder database password in `kustomize/postgresql/secret.yaml` (or apply a patch from `byo/`).
 
