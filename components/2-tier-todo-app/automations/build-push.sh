@@ -29,7 +29,8 @@ export UPDATE_MANIFESTS=false
 "${SCRIPT_DIR}/build.sh"
 
 echo
-echo "Published version: ${VERSION}"
-echo "Deploy with:"
-echo "  oc apply -k ${ROOT}/kustomize/postgresql/"
-echo "  oc apply -k ${ROOT}/kustomize/frontend/"
+echo "Pushed version ${VERSION} to ${REGISTRY}:"
+echo "  ${REGISTRY}:frontend-${VERSION}"
+echo "  ${REGISTRY}:frontend-latest"
+echo "  ${REGISTRY}:postgresql-${VERSION}"
+echo "  ${REGISTRY}:postgresql-latest"

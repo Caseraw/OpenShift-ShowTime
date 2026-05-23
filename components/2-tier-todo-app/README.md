@@ -58,7 +58,7 @@ VERSION=0.1.2 components/2-tier-todo-app/automations/build.sh
 
 ### Build and push (recommended)
 
-`build-push.sh` checks Quay for existing `{frontend,postgresql}-X.Y.Z` tags, picks the next patch version, updates `component.yaml` and Kustomize image tags, then builds and pushes:
+`build-push.sh` checks Quay for existing `{frontend,postgresql}-X.Y.Z` tags, picks the next patch version, optionally updates local manifest image tags, then **builds and pushes** container images to Quay. It does not deploy to OpenShift.
 
 ```bash
 podman login quay.io
