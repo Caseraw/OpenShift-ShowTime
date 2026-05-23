@@ -2,27 +2,21 @@
 
 Two **Application** resources deploy the hybrid 2-tier sample:
 
-| Application | Kustomize path | Target cluster | Workload |
-|-------------|----------------|----------------|----------|
-| `todo-postgresql` | `kustomize/postgresql/` | on-prem OpenShift | PostgreSQL backend |
-| `todo-frontend` | `kustomize/frontend/` | ROSA | Flask frontend + Route |
+| Application | Kustomize path | Destination namespace | Workload |
+|-------------|----------------|----------------------|----------|
+| `todo-postgresql` | `kustomize/postgresql/` | `todo-postgresql` | PostgreSQL backend |
+| `todo-frontend` | `kustomize/frontend/` | `todo-frontend` | Flask frontend + Route |
 
-Both sync to the `todo-app` namespace on their respective cluster.
+Each Application is labeled `app.kubernetes.io/name` with its resource name.
 
 ## Prerequisites
 
-1. **Argo CD** (or OpenShift GitOps) on a management/hub cluster with access to on-prem and ROSA.
-2. **Cluster secrets** registered in Argo CD whose names match `spec.destination.name`:
-   - `on-prem` — datacenter OpenShift cluster
-   - `rosa` — public-cloud ROSA cluster  
-   Patch `destination.name` in the Application manifests (or via `byo/Other/`) if your Argo CD uses different cluster names.
-3. **Container images** pushed to Quay (`automations/build-push.sh`).
-4. **Secrets** — replace placeholder passwords in Kustomize secrets, or overlay from `byo/` before syncing.
-5. **Hybrid DNS** — set `DB_HOST` in `kustomize/frontend/configmap.yaml` so ROSA can reach on-prem PostgreSQL.
+1. **Argo CD** (or OpenShift GitOps) with the target cluster registered (for example `in-cluster`).
+2. **Container images** pushed to Quay (`automations/build-push.sh`).
+3. **Secrets** — replace placeholder passwords in Kustomize secrets, or overlay from `byo/`.
+4. **Hybrid DNS** — set `DB_HOST` in `kustomize/frontend/configmap.yaml` so the `todo-frontend` namespace can reach `todo-postgresql` (default: `todo-postgresql.todo-postgresql.svc.cluster.local`).
 
 ## Register the Applications
-
-From the repository root, on the cluster where Argo CD runs:
 
 ```bash
 oc apply -k components/2-tier-todo-app/argocd/
@@ -38,9 +32,7 @@ oc -n argocd apply -f components/2-tier-todo-app/argocd/frontend-application.yam
 ## Sync order
 
 1. **todo-postgresql** — database and seed data must exist first.
-2. **todo-frontend** — after PostgreSQL is healthy and `DB_HOST` is reachable from ROSA.
-
-Watch sync status:
+2. **todo-frontend** — after PostgreSQL is healthy and `DB_HOST` is reachable.
 
 ```bash
 oc -n openshift-gitops get applications todo-postgresql todo-frontend
@@ -51,8 +43,6 @@ oc -n openshift-gitops get applications todo-postgresql todo-frontend
 | Setting | Location |
 |---------|----------|
 | Git branch / tag | `spec.source.targetRevision` |
-| Cluster names | `spec.destination.name` |
+| Destination cluster | `spec.destination.name` |
+| Destination namespace | `spec.destination.namespace` (`todo-postgresql` / `todo-frontend`) |
 | Argo CD project | `spec.project` |
-| Auto-sync | `spec.syncPolicy.automated` |
-
-For environment-specific overrides, keep patches under `byo/Other/` and point Applications at a fork or overlay branch — do not commit real credentials.

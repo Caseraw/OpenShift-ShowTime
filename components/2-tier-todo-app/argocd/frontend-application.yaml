@@ -5,18 +5,16 @@ metadata:
   labels:
     app.kubernetes.io/name: todo-frontend
     app.kubernetes.io/part-of: 2-tier-todo-app
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  namespace: openshift-gitops
 spec:
+  destination:
+    name: in-cluster
+    namespace: todo-frontend
   project: default
   source:
-    repoURL: https://github.com/Caseraw/OpenShift-ShowTime.git
-    targetRevision: main
     path: components/2-tier-todo-app/kustomize/frontend
-  destination:
-    # Argo CD cluster secret name for ROSA (patch for your environment).
-    name: rosa
-    namespace: todo-app
+    repoURL: 'https://github.com/Caseraw/OpenShift-ShowTime.git'
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
