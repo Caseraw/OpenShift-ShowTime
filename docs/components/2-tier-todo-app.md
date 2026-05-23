@@ -10,7 +10,7 @@ Showcase **2-tier To Do application** for scenario narratives:
 - **Frontend** (Flask) on ROSA — CRUD UI for to do items
 - **Backend** (PostgreSQL) on OpenShift on-prem — data tier kept in the datacenter
 
-Images are built with podman and published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app`.
+Images are built with podman and published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app` using `{image}-{version}` tags (for example `frontend-0.1.0` and `postgresql-0.1.0`).
 
 The frontend targets PostgreSQL via configurable environment variables (`DB_HOST`, `DATABASE_URL`, and related settings), including OpenShift Service DNS for backends on the same or a peer cluster.
 
@@ -20,7 +20,9 @@ The frontend targets PostgreSQL via configurable environment variables (`DB_HOST
 - `src/postgresql/` — PostgreSQL image with schema init
 - `kustomize/frontend/` — manifests for ROSA
 - `kustomize/postgresql/` — manifests for on-prem
-- `automations/build.sh` — build and push images
+- `argocd/` — Argo CD Applications for GitOps deploy
+- `automations/build.sh` — build images for a given version
+- `automations/build-push.sh` — resolve next version from Quay, build, and push images (no cluster deploy)
 
 ## Used by scenarios
 

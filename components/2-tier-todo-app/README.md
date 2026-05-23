@@ -24,6 +24,7 @@ Cluster provisioning, hybrid networking, and scenario storytelling live in scena
 ```
 2-tier-todo-app/
 ├── automations/build.sh          # podman build (and optional push)
+├── argocd/                       # Argo CD Application manifests
 ├── component.yaml
 ├── kustomize/
 │   ├── frontend/                 # Deploy to ROSA
@@ -47,32 +48,73 @@ From the repository root:
 
 ```bash
 chmod +x components/2-tier-todo-app/automations/build.sh
+chmod +x components/2-tier-todo-app/automations/build-push.sh
 
-# Build only
+# Build only (uses version from component.yaml)
 components/2-tier-todo-app/automations/build.sh
 
-# Build and push
-PUSH=true components/2-tier-todo-app/automations/build.sh
+# Build locally with an explicit version
+VERSION=0.1.2 components/2-tier-todo-app/automations/build.sh
 ```
 
-Images published:
+### Build and push (recommended)
 
-| Image | Tag |
-|-------|-----|
-| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend` |
-| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql` |
+`build-push.sh` checks Quay for existing `{frontend,postgresql}-X.Y.Z` tags, picks the next patch version, optionally updates local manifest image tags, then **builds and pushes** container images to Quay. It does not deploy to OpenShift.
 
-Optional environment variables: `REGISTRY`, `TAG` (default `latest`), `PUSH` (default `false`).
+```bash
+podman login quay.io
+components/2-tier-todo-app/automations/build-push.sh
+```
+
+Version logic:
+
+1. List tags on `quay.io/rh-ee-kamirsar/2-tier-to-do-app` (via `skopeo` or the Quay API).
+2. Find the highest semver among `frontend-*` / `postgresql-*` tags and `component.yaml`.
+3. If that version already exists in the registry, bump the patch (`0.1.0` → `0.1.1`).
+4. Otherwise publish the highest version (first push of a manually bumped `component.yaml`).
+
+Set `UPDATE_MANIFESTS=false` to push without rewriting local YAML, or `VERSION=x.y.z` to force a specific version.
+
+Images published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app` use `{image}-{version}` tags (version from `component.yaml`, currently `0.1.0`):
+
+| Image | Tag | Purpose |
+|-------|-----|---------|
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend-0.1.0` | Versioned frontend (used by Kustomize) |
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql-0.1.0` | Versioned PostgreSQL (used by Kustomize) |
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend-latest` | Latest frontend build |
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql-latest` | Latest PostgreSQL build |
+
+Optional environment variables: `REGISTRY`, `VERSION` (defaults to `component.yaml` for `build.sh`), `PUSH` (default `false` for `build.sh`).
 
 Log in to Quay before pushing:
 
 ```bash
 podman login quay.io
+PUSH=true VERSION=0.1.0 components/2-tier-todo-app/automations/build.sh
 ```
+
+Prefer `automations/build-push.sh` for registry-aware version bumps and manifest updates.
 
 ## Deploy
 
-### 1. Backend — on-prem OpenShift
+### Option A — Argo CD (recommended)
+
+Register two Applications on your Argo CD / OpenShift GitOps instance:
+
+| Application | Cluster | Kustomize path |
+|-------------|---------|----------------|
+| `todo-postgresql` | on-prem (`destination.name: on-prem`) | `kustomize/postgresql/` |
+| `todo-frontend` | ROSA (`destination.name: rosa`) | `kustomize/frontend/` |
+
+```bash
+oc apply -k components/2-tier-todo-app/argocd/
+```
+
+See [`argocd/README.md`](argocd/README.md) for cluster registration, sync order, and customization. Sync **postgresql** before **frontend**.
+
+### Option B — Manual `oc apply`
+
+#### 1. Backend — on-prem OpenShift
 
 Replace the placeholder database password in `kustomize/postgresql/secret.yaml` (or apply a patch from `byo/`).
 
@@ -83,6 +125,8 @@ kustomize build components/2-tier-todo-app/kustomize/postgresql | oc apply -f -
 ```
 
 Note the PostgreSQL hostname or IP that ROSA can reach (Service DNS alone is not enough across clusters unless you expose it on your hybrid network).
+
+On a **fresh database** (empty PVC), the PostgreSQL image automatically loads five sample to do items for demo walkthroughs. Re-deploying against existing data does not re-seed tasks.
 
 ### 2. Frontend — ROSA
 
@@ -148,12 +192,12 @@ URL-encode special characters in the password.
 podman run -d --name todo-pg --network todo-local \
   -e POSTGRES_DB=todos -e POSTGRES_USER=todo -e POSTGRES_PASSWORD=test \
   -e PGDATA=/var/lib/postgresql/data/pgdata \
-  quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-latest
 
 podman run -d --name todo-fe --network todo-local -p 8080:8080 \
   -e DB_HOST=todo-pg -e DB_PORT=5432 -e DB_NAME=todos \
   -e DB_USER=todo -e DB_PASSWORD=test \
-  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-latest
 ```
 
 Or with `DATABASE_URL`:
@@ -161,7 +205,7 @@ Or with `DATABASE_URL`:
 ```bash
 podman run -d --name todo-fe --network todo-local -p 8080:8080 \
   -e DATABASE_URL='postgresql://todo:test@todo-pg:5432/todos' \
-  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-latest
 ```
 
 Check connectivity: `curl http://127.0.0.1:8080/ready`

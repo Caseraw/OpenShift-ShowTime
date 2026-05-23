@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: todo-frontend
+  labels:
+    app.kubernetes.io/name: todo-frontend
+    app.kubernetes.io/part-of: 2-tier-todo-app
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Caseraw/OpenShift-ShowTime.git
+    targetRevision: main
+    path: components/2-tier-todo-app/kustomize/frontend
+  destination:
+    # Argo CD cluster secret name for ROSA (patch for your environment).
+    name: rosa
+    namespace: todo-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

@@ -6,6 +6,8 @@ metadata:
     app: todo-postgresql
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: todo-postgresql
@@ -14,9 +16,12 @@ spec:
       labels:
         app: todo-postgresql
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
         - name: postgresql
-          image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql
+          image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-0.1.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
               name: postgresql
@@ -26,16 +31,38 @@ spec:
           env:
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+          startupProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - todo
+                - -d
+                - todos
+            failureThreshold: 30
+            periodSeconds: 5
           readinessProbe:
             exec:
               command:
                 - pg_isready
                 - -U
                 - todo
-            initialDelaySeconds: 5
+                - -d
+                - todos
             periodSeconds: 10
           livenessProbe:
             exec:
@@ -43,6 +70,8 @@ spec:
                 - pg_isready
                 - -U
                 - todo
+                - -d
+                - todos
             initialDelaySeconds: 30
             periodSeconds: 20
       volumes:

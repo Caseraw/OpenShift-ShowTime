@@ -8,5 +8,9 @@ spec:
   to:
     kind: Service
     name: todo-frontend
+    weight: 100
   port:
     targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
