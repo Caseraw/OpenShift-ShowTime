@@ -55,14 +55,16 @@ components/2-tier-todo-app/automations/build.sh
 PUSH=true components/2-tier-todo-app/automations/build.sh
 ```
 
-Images published:
+Images published to `quay.io/rh-ee-kamirsar/2-tier-to-do-app` use `{image}-{version}` tags (version from `component.yaml`, currently `0.1.0`):
 
-| Image | Tag |
-|-------|-----|
-| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend` |
-| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql` |
+| Image | Tag | Purpose |
+|-------|-----|---------|
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend-0.1.0` | Versioned frontend (used by Kustomize) |
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql-0.1.0` | Versioned PostgreSQL (used by Kustomize) |
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `frontend-latest` | Latest frontend build |
+| `quay.io/rh-ee-kamirsar/2-tier-to-do-app` | `postgresql-latest` | Latest PostgreSQL build |
 
-Optional environment variables: `REGISTRY`, `TAG` (default `latest`), `PUSH` (default `false`).
+Optional environment variables: `REGISTRY`, `VERSION` (defaults to `component.yaml`), `PUSH` (default `false`).
 
 Log in to Quay before pushing:
 
@@ -150,12 +152,12 @@ URL-encode special characters in the password.
 podman run -d --name todo-pg --network todo-local \
   -e POSTGRES_DB=todos -e POSTGRES_USER=todo -e POSTGRES_PASSWORD=test \
   -e PGDATA=/var/lib/postgresql/data/pgdata \
-  quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql-latest
 
 podman run -d --name todo-fe --network todo-local -p 8080:8080 \
   -e DB_HOST=todo-pg -e DB_PORT=5432 -e DB_NAME=todos \
   -e DB_USER=todo -e DB_PASSWORD=test \
-  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-latest
 ```
 
 Or with `DATABASE_URL`:
@@ -163,7 +165,7 @@ Or with `DATABASE_URL`:
 ```bash
 podman run -d --name todo-fe --network todo-local -p 8080:8080 \
   -e DATABASE_URL='postgresql://todo:test@todo-pg:5432/todos' \
-  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend
+  quay.io/rh-ee-kamirsar/2-tier-to-do-app:frontend-latest
 ```
 
 Check connectivity: `curl http://127.0.0.1:8080/ready`

@@ -1,12 +1,20 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: todo-app
+
 resources:
   - secret.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml
 
-commonLabels:
-  app.kubernetes.io/part-of: 2-tier-todo-app
-  app.kubernetes.io/component: postgresql
+images:
+  - name: quay.io/rh-ee-kamirsar/2-tier-to-do-app
+    newTag: postgresql-0.1.0
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: 2-tier-todo-app
+      app.kubernetes.io/component: postgresql
+    includeSelectors: true
