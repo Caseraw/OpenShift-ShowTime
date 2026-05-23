@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-postgresql
+  labels:
+    app: todo-postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-postgresql
+  template:
+    metadata:
+      labels:
+        app: todo-postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: quay.io/rh-ee-kamirsar/2-tier-to-do-app:postgresql
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          envFrom:
+            - secretRef:
+                name: todo-postgresql
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - todo
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - todo
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: todo-postgresql

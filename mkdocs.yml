@@ -37,6 +37,7 @@ nav:
           - Hub and spoke (RHACM): scenarios/hub-spoke-acm.md
       - Components:
           - RHACM install: components/rhacm-install.md
+          - 2-tier To Do app: components/2-tier-todo-app.md
   - Project layout: project-layout.md
 
 markdown_extensions:
