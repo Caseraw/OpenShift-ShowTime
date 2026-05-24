@@ -49,6 +49,7 @@ spec:
               path: /ready
               port: todo-frontend
             periodSeconds: 10
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /health
