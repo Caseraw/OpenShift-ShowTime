@@ -188,3 +188,10 @@ RUN ARCH=$(cat /tmp/arch) && \
     curl -L -f -o kn "https://github.com/knative/client/releases/download/knative-v1.22.0/kn-linux-${ARCH}" && \
     install -m 755 kn /usr/local/bin/kn && \
     rm -rf kn
+
+# Download Subctl CLI
+RUN ARCH=$(cat /tmp/arch) && \
+    curl -L -f -o subctl.tar.xz "https://developers.redhat.com/content-gateway/file/pub/rhacm/clients/subctl/0.20.1-2/subctl-0.20.1-2-linux-${ARCH}.tar.xz" && \
+    tar -xJf subctl.tar.xz && \
+    install -m 755 subctl-v0.20.1/subctl-v0.20.1-linux-${ARCH} /usr/local/bin/subctl && \
+    rm -rf subctl.tar.xz subctl-v0.20.1

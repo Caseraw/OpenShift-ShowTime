@@ -9,7 +9,8 @@ data:
   # Same cluster:  todo-postgresql.todo-postgresql.svc.cluster.local
   # Cross-cluster: use the hostname your hybrid network or multi-cluster
   #               service setup exposes (for example *.svc.clusterset.local).
-  DB_HOST: todo-postgresql.todo-postgresql.svc.cluster.local
+  #DB_HOST: todo-postgresql.todo-postgresql.svc.cluster.local
+  DB_HOST: todo-postgresql.todo-postgresql.svc.clusterset.local
   DB_PORT: "5432"
   DB_NAME: todos
   DB_USER: todo

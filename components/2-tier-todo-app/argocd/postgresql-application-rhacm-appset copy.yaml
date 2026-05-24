@@ -1,0 +1,66 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: todo-postgresql
+  namespace: openshift-gitops
+spec:
+  generators:
+    - clusterDecisionResource:
+        configMapRef: acm-placement
+        labelSelector:
+          matchLabels:
+            cluster.open-cluster-management.io/placement: todo-postgresql-placement
+        requeueAfterSeconds: 30
+  template:
+    metadata:
+      name: todo-postgresql-{{name}}
+      annotations:
+        apps.open-cluster-management.io/ocm-managed-cluster: "{{name}}"
+        apps.open-cluster-management.io/ocm-managed-cluster-app-namespace: openshift-gitops
+        argocd.argoproj.io/skip-reconcile: "true"
+      labels:
+        velero.io/exclude-from-backup: "true"
+        apps.open-cluster-management.io/pull-to-ocm-managed-cluster: "true"
+    spec:
+      project: default
+      sources:
+        - repositoryType: git
+          repoURL: https://github.com/Caseraw/OpenShift-ShowTime.git
+          targetRevision: main
+          path: components/2-tier-todo-app/kustomize/postgresql
+      destination:
+        namespace: todo-postgresql
+        server: "{{server}}"
+      syncPolicy:
+        automated:
+          enabled: true
+          selfHeal: true
+          prune: true
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: todo-postgresql-placement
+  namespace: openshift-gitops
+spec:
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+  numberOfClusters: 1
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: local-cluster
+              operator: NotIn
+              values:
+                - "true"
+            - key: name
+              operator: In
+              values:
+                - on-prem-virt-cluster
