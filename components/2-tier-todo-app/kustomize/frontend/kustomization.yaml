@@ -4,6 +4,10 @@ kind: Kustomization
 namespace: todo-frontend
 
 resources:
+  # The todo-postgresql namespace must exist on the frontend cluster so that
+  # Submariner's Lighthouse controller can place the ServiceImport there,
+  # enabling svc.clusterset.local DNS resolution for the on-prem backend.
+  - namespace.yaml
   - configmap.yaml
   - secret.yaml
   - imagestream.yaml
