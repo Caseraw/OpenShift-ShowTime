@@ -9,11 +9,11 @@ data:
   # Same cluster:  todo-postgresql.todo-postgresql.svc.cluster.local
   # Cross-cluster: use the hostname your hybrid network or multi-cluster
   #               service setup exposes (for example *.svc.clusterset.local).
-  #DB_HOST: todo-postgresql.todo-postgresql.svc.cluster.local
+  DB_HOST: todo-postgresql.todo-postgresql.svc.cluster.local
   #DB_HOST: todo-postgresql.todo-postgresql.svc.clusterset.local
-  DB_HOST: todo-postgresql-todo-postgresql.apps.cluster-01.sandbox551.opentlc.com
-  DB_PORT: "443"
+  #DB_HOST: todo-postgresql-todo-postgresql.apps.cluster-01.sandbox551.opentlc.com
+  DB_PORT: "5432"
   DB_NAME: todos
   DB_USER: todo
   # Optional when connecting over TLS: require, prefer, disable, etc.
-  DB_SSLMODE: require
+  DB_SSLMODE: disable
