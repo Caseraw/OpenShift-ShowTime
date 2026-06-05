@@ -1,5 +1,5 @@
 {
-    "name": "OpenShift - Cloud on Wheels",
+    "name": "OpenShift Showtime",
     "build": {
         "dockerfile": "Containerfile"
     },
